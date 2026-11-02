@@ -14,7 +14,7 @@ only work done during the event. The pre-event code is **not** copied here.
 | Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (241 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
 | Assembly | `setup.ps1` (Windows) / `setup.sh` (Linux/macOS) clone the pinned baseline and apply the patch, producing the runnable app in `app/` |
 
-The full commit-by-commit development narrative (45 commits, Oct 28 – Nov 2,
+The full commit-by-commit development narrative (46 commits, Oct 28 – Nov 2,
 plus cleanup) is preserved in [EVENT_LOG.md](EVENT_LOG.md), including how each
 dev-repo commit maps into this submission.
 
@@ -22,7 +22,7 @@ The patch was generated from the development repo with:
 
 ```bash
 git diff --binary --full-index 02f2b6b93284cf1478abc79cdd3145b24576b5b8 <event-final-commit>
-# event-final-commit = 74486bd6fe68f8da7aaca40b090ec1e14b16674e (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker credential-store and UI-volume fixes)
+# event-final-commit = 6ad3188c7f10fbbf744115c70b7a0eaef0a93e7e (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker credential-store/UI-volume fixes + home-screen prompt trim)
 ```
 
 Everything in the patch is therefore, by construction, a change made on top of
@@ -123,7 +123,7 @@ restart the backend to fix that.
 ```text
 reliability-copilot-hackathon/
 ├── README.md                              # this file
-├── EVENT_LOG.md                           # 45-commit development narrative + mapping to this repo
+├── EVENT_LOG.md                           # 46-commit development narrative + mapping to this repo
 ├── setup.ps1 / setup.sh                   # clone pinned baseline + apply patch -> app/
 ├── patches/
 │   └── reliability-copilot-event.patch    # all event changes vs. pinned baseline (binary-safe)

@@ -14,7 +14,7 @@ only work done during the event. The pre-event code is **not** copied here.
 | Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (241 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
 | Assembly | `setup.ps1` (Windows) / `setup.sh` (Linux/macOS) clone the pinned baseline and apply the patch, producing the runnable app in `app/` |
 
-The full commit-by-commit development narrative (43 commits, Oct 28 – Nov 2,
+The full commit-by-commit development narrative (44 commits, Oct 28 – Nov 2,
 plus cleanup) is preserved in [EVENT_LOG.md](EVENT_LOG.md), including how each
 dev-repo commit maps into this submission.
 
@@ -123,7 +123,7 @@ restart the backend to fix that.
 ```text
 reliability-copilot-hackathon/
 ├── README.md                              # this file
-├── EVENT_LOG.md                           # 43-commit development narrative + mapping to this repo
+├── EVENT_LOG.md                           # 44-commit development narrative + mapping to this repo
 ├── setup.ps1 / setup.sh                   # clone pinned baseline + apply patch -> app/
 ├── patches/
 │   └── reliability-copilot-event.patch    # all event changes vs. pinned baseline (binary-safe)

@@ -83237,6 +83237,38 @@ index 0000000000000000000000000000000000000000..70bcec9827f5beb81a0c534bfabc5f62
 +## 1.4.3. References For Chapter 1: Exploratory Data Analysis
 + Wilk, M. B. and Gnanadesikan, R. (1968), Probability Plotting Methods
 +for the Analysis of Data, Biometrika, 5(5), pp. 1-19.
+diff --git a/knowledge-base/prasanna.md b/knowledge-base/prasanna.md
+deleted file mode 100644
+index 488cf8f7457712f3a95c0265c9545a37d553eba5..0000000000000000000000000000000000000000
+--- a/knowledge-base/prasanna.md
++++ /dev/null
+@@ -1,26 +0,0 @@
+-# Prasanna — reliability engineer
+-
+-Embedded systems, software, and firmware reliability engineer. Experience spans **safety-critical automotive verification and validation** and **oil & gas design for reliability**.
+-
+-## Automotive (safety-critical V&V)
+-
+-Worked on verification and validation of safety-critical vehicle systems, including:
+-
+-- Airbags
+-- Occupant classification / occupant crash modules (OCM)
+-- Vehicle stability control (VSC)
+-- Anti-lock braking systems (ABS)
+-
+-Typical work: firmware and software reliability in embedded controllers, test evidence against safety requirements, failure modes that must be demonstrated rather than assumed.
+-
+-## Oil & gas
+-
+-Design-for-reliability (DfR) on oil and gas equipment and systems: reliability targets, life-data thinking, and engineering decisions that hold up in a design review.
+-
+-## Interests
+-
+-Wide area of interests from engineering, technology, philosophy, and current affairs.
+-
+-## Copilot context
+-
+-When answering questions about this person’s background, cite this file. Do not invent employers, dates, or certifications that are not written here.
 diff --git a/reliability-copilot-backup.bundle b/reliability-copilot-backup.bundle
 deleted file mode 100644
 index 011c02acc745d2b3cad9c671e1b465152a11d2b0..0000000000000000000000000000000000000000

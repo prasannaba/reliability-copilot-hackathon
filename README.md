@@ -11,14 +11,14 @@ only work done during the event. The pre-event code is **not** copied here.
 |---|---|
 | Pre-event engine (baseline) | Public repo: https://github.com/prasannaba/reliability-ai-agent |
 | Pinned baseline commit | `02f2b6b93284cf1478abc79cdd3145b24576b5b8` — "Slim Docker image with CPU torch default plus CUDA overlay, fix Settings model refresh (v3.9.0)", 2026-09-28, on branch `main` |
-| Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (240 files changed vs. the pinned baseline) |
+| Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (241 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
 | Assembly | `setup.ps1` (Windows) / `setup.sh` (Linux/macOS) clone the pinned baseline and apply the patch, producing the runnable app in `app/` |
 
 The patch was generated from the development repo with:
 
 ```bash
 git diff --binary --full-index 02f2b6b93284cf1478abc79cdd3145b24576b5b8 <event-final-commit>
-# event-final-commit = dacfa24fff9e2b54c42a24b86695b6b07d8ad575 (private dev repo reliability-copilot, 2026-11-02, v5.1.1)
+# event-final-commit = 1a75c79348c243bb6fff9f30f7999a862d2353e7 (private dev repo reliability-copilot, 2026-11-02, v5.1.1 + knowledge-base cleanup)
 ```
 
 Everything in the patch is therefore, by construction, a change made on top of

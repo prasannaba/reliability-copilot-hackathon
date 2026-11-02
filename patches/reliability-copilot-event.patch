@@ -902,7 +902,7 @@ index 0000000000000000000000000000000000000000..abce2c2b869c4ab37a926eced7676b71
 +3. Ensure host ports are not in use
 +4. Check Docker container logs: `docker compose logs app`
 diff --git a/Dockerfile b/Dockerfile
-index 504858899f3738b33355f914b6994fc74a374f0c..c104f37275338f8ce637acbe9e026d06f31ff399 100644
+index 504858899f3738b33355f914b6994fc74a374f0c..6adcfa747df8592d1d20701b45da49a7bc761ec2 100644
 --- a/Dockerfile
 +++ b/Dockerfile
 @@ -1,16 +1,15 @@
@@ -951,11 +951,12 @@ index 504858899f3738b33355f914b6994fc74a374f0c..c104f37275338f8ce637acbe9e026d06
  # --chown here (instead of a later chown -R) avoids duplicating the whole
  # venv into a second ~6GB layer.
  COPY --chown=10000:10000 backend/ ./
-@@ -69,7 +69,7 @@ COPY --chown=10000:10000 --from=ui /src/frontend/dist/frontend/browser/ ./static
+@@ -69,7 +69,8 @@ COPY --chown=10000:10000 --from=ui /src/frontend/dist/frontend/browser/ ./static
  RUN mkdir -p /app/knowledge-base /app/hf-cache \
      && EMBEDDING_LOCAL_FILES_ONLY=false uv run --no-sync python -c \
      "from src.knowledge.base import ReliabilityKnowledgeBase; ReliabilityKnowledgeBase().embedder" \
 -    && chown -R 10000:10000 /app/hf-cache /app/knowledge-base /app/knowledge-base-physics /app/backend/.rag /app/backend/.rag-physics /app/backend/static
++    && chown 10000:10000 /app/backend \
 +    && chown -R 10000:10000 /app/hf-cache /app/knowledge-base /app/backend/.rag /app/backend/static
  USER 10000:10000
  EXPOSE 8000

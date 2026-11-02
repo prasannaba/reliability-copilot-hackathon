@@ -22,7 +22,7 @@ The patch was generated from the development repo with:
 
 ```bash
 git diff --binary --full-index 02f2b6b93284cf1478abc79cdd3145b24576b5b8 <event-final-commit>
-# event-final-commit = 1a75c79348c243bb6fff9f30f7999a862d2353e7 (private dev repo reliability-copilot, 2026-11-02, v5.1.1 + knowledge-base cleanup)
+# event-final-commit = 2769c690082f0adbd734dd4b837133d5f3a29a23 (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker credential-store fix)
 ```
 
 Everything in the patch is therefore, by construction, a change made on top of

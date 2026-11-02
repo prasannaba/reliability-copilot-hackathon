@@ -7,7 +7,7 @@ repository.
 - **Development repo (private during the event):** `reliability-copilot`
 - **Development period:** 2026-10-28 to 2026-11-02 (plus a knowledge-base
   cleanup on 2026-11-03)
-- **Commits:** 43 (`e1c1989` … `1a75c79`, branch `master`)
+- **Commits:** 44 (`e1c1989` … `2769c69`, branch `master`)
 - **Hashes below** refer to that development repo. They are listed so the
   work can be audited against it after the event; they are not commits in
   this submission repository.
@@ -17,8 +17,8 @@ repository.
 | Dev-repo history | Submission equivalent |
 |---|---|
 | `9378bcd` imported the pre-event baseline v3.9.0 into the dev repo so work could start from a runnable tree | **Not replayed and not copied.** Replaced by `setup.ps1` / `setup.sh`, which clone the public baseline repo and check out the pinned commit `02f2b6b93284cf1478abc79cdd3145b24576b5b8` |
-| All other commits (`e1c1989`, `87e7973`, and everything after `9378bcd`) | Netted into `patches/reliability-copilot-event.patch` = `git diff --binary 02f2b6b..1a75c79` (241 files). Intermediate states that were later superseded (e.g. plan/ask modes in `cff791f`, removed in `eb802e0` / `04b26a4`) appear only as their net effect in the final patch |
-| Final tree at `1a75c79` | Reproduced byte-for-byte by running the setup scripts (verified 2026-11-03: assembled tree matched the dev repo tree file-for-file; backend tests 192 passed, 1 skipped) |
+| All other commits (`e1c1989`, `87e7973`, and everything after `9378bcd`) | Netted into `patches/reliability-copilot-event.patch` = `git diff --binary 02f2b6b..2769c69` (241 files). Intermediate states that were later superseded (e.g. plan/ask modes in `cff791f`, removed in `eb802e0` / `04b26a4`) appear only as their net effect in the final patch |
+| Final tree at `2769c69` | Reproduced by running the setup scripts (verified 2026-11-03 at `1a75c79`: assembled tree matched the dev repo tree file-for-file, backend tests 192 passed / 1 skipped; `2769c69` is a one-line Dockerfile ownership fix re-verified by a clean-room Docker Settings-save test — see submission README verification history) |
 
 The dev repo's own `README.md`, `ARCHITECTURE.md`, `SKILLS_INDEX.md` and
 `AGENTS.md` are part of the final tree and therefore travel inside the
@@ -86,3 +86,4 @@ patch — after setup they are readable at `app/README.md`,
 | 41 | 2026-11-02 | `b3582f9` | docs: add docstrings + frontend comments — 5.1.1 [skip ci] |
 | 42 | 2026-11-02 | `dacfa24` | docs: align README/ARCHITECTURE/SKILLS_INDEX to 5.1.1 build + Docker-first quick start [skip ci] |
 | 43 | 2026-11-03 | `1a75c79` | chore: remove personal bio from knowledge base |
+| 44 | 2026-11-03 | `2769c69` | fix(docker): make /app/backend writable by appuser so Settings can store API key |

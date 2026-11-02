@@ -10401,7 +10401,7 @@ index eac6293c88dd64942d808ae3a07ef8efed41c16e..a0321d9ca70210f4feafb86568feba37
 -              count: all
 -              capabilities: [gpu]
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 519fc736cb207093f6428d7327e49db9f4ccac39..df1140e8ac83935211e44043d867048bc80379c5 100644
+index 519fc736cb207093f6428d7327e49db9f4ccac39..2333968a0e5fb4928da7525170979bca1786460c 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -1,24 +1,19 @@
@@ -10442,16 +10442,24 @@ index 519fc736cb207093f6428d7327e49db9f4ccac39..df1140e8ac83935211e44043d867048b
        # Inside a container the server MUST bind 0.0.0.0 (loopback default only
        # applies to bare-metal runs). Set APP_TOKEN in .env for any shared host.
        HOST: "0.0.0.0"
-@@ -51,7 +43,7 @@ services:
+@@ -50,8 +42,15 @@ services:
+       - ./knowledge-base:/app/knowledge-base
        - ./backend/.rag:/app/backend/.rag
        - ./backend/static:/app/backend/static
++      # The host static/ mount above would shadow the UI bundle built into
++      # the image (host static/ui holds only .gitkeep), making / report
++      # "ui: not built". A named volume over static/ui is populated from
++      # the image on first use and keeps the built UI visible. After
++      # rebuilding with frontend changes, refresh it with:
++      #   docker compose down && docker volume rm app_ui-bundle
++      - ui-bundle:/app/backend/static/ui
      # Image runs as UID 10000 (see Dockerfile): host bind-mounts must be
 -    # writable by it (e.g. `chown -R 10000:10000 knowledge-base knowledge-base-physics backend/.rag backend/.rag-physics`).
 +    # writable by it (e.g. `chown -R 10000:10000 knowledge-base backend/.rag`).
      # Container hardening: no new privileges, no capabilities, bounded PIDs.
      # NOTE: no `read_only: true` — the app legitimately writes .rag index,
      # static plots, and the encrypted secret file under /app.
-@@ -96,37 +88,6 @@ services:
+@@ -96,37 +95,6 @@ services:
      pids_limit: 128
      restart: unless-stopped
  
@@ -10489,6 +10497,11 @@ index 519fc736cb207093f6428d7327e49db9f4ccac39..df1140e8ac83935211e44043d867048b
    # Optional local LLM (Ollama). Enable with --profile local-llm, then set
    # LLM_API_BASE=http://ollama:11434  (inside compose network)
    # or LLM_API_BASE=http://localhost:11434 (Docker Desktop) in .env.
+@@ -148,3 +116,4 @@ services:
+ 
+ volumes:
+   ollama-models:
++  ui-bundle:
 diff --git a/docs/backend-mcp-guide.md b/docs/backend-mcp-guide.md
 deleted file mode 100644
 index ecb8d33323f8a631f6ea28fd4edcd44feb888bf1..0000000000000000000000000000000000000000

@@ -962,10 +962,10 @@ index 504858899f3738b33355f914b6994fc74a374f0c..6adcfa747df8592d1d20701b45da49a7
  EXPOSE 8000
  HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 diff --git a/README.md b/README.md
-index e549eec647ca626a0f19e92f408341940b7d9551..6ea16b32ef3f246fb562a2c87010c00bf8f1174b 100644
+index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a0804d6bc81 100644
 --- a/README.md
 +++ b/README.md
-@@ -1,199 +1,278 @@
+@@ -1,199 +1,280 @@
  # Reliability Copilot
  
 -**Natural language in. Defensible Weibull paper and B-life out. Company documents stay on disk. The language model never invents β, η, or a warranty call.**
@@ -1321,6 +1321,8 @@ index e549eec647ca626a0f19e92f408341940b7d9551..6ea16b32ef3f246fb562a2c87010c00b
 +cp .env.example .env   # set LLM_API_BASE + LLM_API_KEY (Baseten) — .env is ignored, never commit real keys
 +docker compose up --build -d
 +docker compose ps                 # app 0.0.0.0:8000, mcp-reliability 8001
++# Wait until app shows (healthy) — first start loads the embedding model and
++# can take 30-60s; curl in that window may return "Empty reply from server".
 +curl http://localhost:8000/health  # {"status":"ok"}
 +# UI: http://localhost:8000
 +# logs: docker compose logs app --tail 50
@@ -1382,7 +1384,7 @@ index e549eec647ca626a0f19e92f408341940b7d9551..6ea16b32ef3f246fb562a2c87010c00b
  
  ```powershell
  cd frontend
-@@ -201,77 +280,99 @@ npm install
+@@ -201,77 +282,99 @@ npm install
  npm run dev
  ```
  

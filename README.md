@@ -14,7 +14,7 @@ only work done during the event. The pre-event code is **not** copied here.
 | Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (241 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
 | Assembly | `setup.ps1` (Windows) / `setup.sh` (Linux/macOS) clone the pinned baseline and apply the patch, producing the runnable app in `app/` |
 
-The full commit-by-commit development narrative (48 commits, Oct 28 – Nov 2,
+The full commit-by-commit development narrative (49 commits, Oct 28 – Nov 2,
 plus cleanup) is preserved in [EVENT_LOG.md](EVENT_LOG.md), including how each
 dev-repo commit maps into this submission.
 
@@ -22,7 +22,7 @@ The patch was generated from the development repo with:
 
 ```bash
 git diff --binary --full-index 02f2b6b93284cf1478abc79cdd3145b24576b5b8 <event-final-commit>
-# event-final-commit = 5df36f06291c941e45ce45bbe149e4d58a1c1ff3 (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker credential-store/UI-volume fixes + home-screen prompt updates)
+# event-final-commit = bbe5559936cd8fa366e31243f383ce284682455c (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker fixes + home-screen prompt updates + startup-wait docs)
 ```
 
 Everything in the patch is therefore, by construction, a change made on top of
@@ -78,7 +78,10 @@ cd reliability-copilot-hackathon
 cd app
 copy .env.example .env # set LLM_API_BASE + LLM_API_KEY (e.g. Baseten) — never commit .env
 docker compose up --build -d
-curl http://localhost:8000/health   # {"status":"ok"}
+# Wait for startup: first boot loads the embedding model (30-60s). "Empty
+# reply from server" from curl in that window is expected — retry, or check
+# `docker compose ps` until app shows (healthy).
+1..30 | % { curl.exe -s http://localhost:8000/health; if ($LASTEXITCODE -eq 0) { break }; sleep 2 }
 # UI: http://localhost:8000
 ```
 
@@ -91,7 +94,11 @@ cd reliability-copilot-hackathon
 cd app
 cp .env.example .env   # set LLM_API_BASE + LLM_API_KEY — never commit .env
 docker compose up --build -d
-curl http://localhost:8000/health
+# Wait for startup: first boot loads the embedding model (30-60s). "Empty
+# reply from server" from curl in that window is expected — retry, or check
+# `docker compose ps` until app shows (healthy).
+for i in $(seq 1 30); do curl -s http://localhost:8000/health && break || sleep 2; done
+# UI: http://localhost:8000
 ```
 
 ### Verify the assembly (optional)
@@ -123,7 +130,7 @@ restart the backend to fix that.
 ```text
 reliability-copilot-hackathon/
 ├── README.md                              # this file
-├── EVENT_LOG.md                           # 48-commit development narrative + mapping to this repo
+├── EVENT_LOG.md                           # 49-commit development narrative + mapping to this repo
 ├── setup.ps1 / setup.sh                   # clone pinned baseline + apply patch -> app/
 ├── patches/
 │   └── reliability-copilot-event.patch    # all event changes vs. pinned baseline (binary-safe)

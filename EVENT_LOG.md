@@ -7,7 +7,7 @@ repository.
 - **Development repo (private during the event):** `reliability-copilot`
 - **Development period:** 2026-10-28 to 2026-11-02 (plus a knowledge-base
   cleanup on 2026-11-03)
-- **Commits:** 48 (`e1c1989` … `5df36f0`, branch `master`)
+- **Commits:** 49 (`e1c1989` … `bbe5559`, branch `master`)
 - **Hashes below** refer to that development repo. They are listed so the
   work can be audited against it after the event; they are not commits in
   this submission repository.
@@ -17,8 +17,8 @@ repository.
 | Dev-repo history | Submission equivalent |
 |---|---|
 | `9378bcd` imported the pre-event baseline v3.9.0 into the dev repo so work could start from a runnable tree | **Not replayed and not copied.** Replaced by `setup.ps1` / `setup.sh`, which clone the public baseline repo and check out the pinned commit `02f2b6b93284cf1478abc79cdd3145b24576b5b8` |
-| All other commits (`e1c1989`, `87e7973`, and everything after `9378bcd`) | Netted into `patches/reliability-copilot-event.patch` = `git diff --binary 02f2b6b..5df36f0` (241 files). Intermediate states that were later superseded (e.g. plan/ask modes in `cff791f`, removed in `eb802e0` / `04b26a4`) appear only as their net effect in the final patch |
-| Final tree at `5df36f0` | Reproduced by running the setup scripts (verified 2026-11-03 at `1a75c79`: assembled tree matched the dev repo tree file-for-file, backend tests 192 passed / 1 skipped; `2769c69` + `74486bd` are Docker ownership/volume fixes re-verified by clean-room Docker tests: Settings save HTTP 200 and the UI serving real HTML; `6ad3188`/`2385fc1`/`5df36f0` adjust home-screen sample prompts) |
+| All other commits (`e1c1989`, `87e7973`, and everything after `9378bcd`) | Netted into `patches/reliability-copilot-event.patch` = `git diff --binary 02f2b6b..bbe5559` (241 files). Intermediate states that were later superseded (e.g. plan/ask modes in `cff791f`, removed in `eb802e0` / `04b26a4`) appear only as their net effect in the final patch |
+| Final tree at `bbe5559` | Reproduced by running the setup scripts (verified 2026-11-03 at `1a75c79`: assembled tree matched the dev repo tree file-for-file, backend tests 192 passed / 1 skipped; `2769c69` + `74486bd` are Docker ownership/volume fixes re-verified by clean-room Docker tests: Settings save HTTP 200 and the UI serving real HTML; `6ad3188`/`2385fc1`/`5df36f0` adjust home-screen sample prompts; `bbe5559` documents the Docker startup wait) |
 
 The dev repo's own `README.md`, `ARCHITECTURE.md`, `SKILLS_INDEX.md` and
 `AGENTS.md` are part of the final tree and therefore travel inside the
@@ -91,3 +91,4 @@ patch — after setup they are readable at `app/README.md`,
 | 46 | 2026-11-03 | `6ad3188` | feat(frontend): remove warranty/B10 sample prompt from home screen |
 | 47 | 2026-11-03 | `2385fc1` | feat(frontend): extend Weibull sample prompt dataset |
 | 48 | 2026-11-03 | `5df36f0` | fix(frontend): correct sample prompt unit count to 9 |
+| 49 | 2026-11-03 | `bbe5559` | docs: note Docker startup wait before health check |

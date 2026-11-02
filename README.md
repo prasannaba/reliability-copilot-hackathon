@@ -108,6 +108,16 @@ Backend tests inside the assembled app (requires Python 3.12 + `uv`):
 cd app/backend && uv sync --all-groups && uv run pytest
 ```
 
+### Running locally without Docker (optional)
+
+Use `app/scripts/run.ps1` (Windows) or `app/scripts/run.sh` — it builds the
+frontend into `app/backend/static/ui` first if needed, then starts the
+backend at http://localhost:8000. If you start the backend directly
+(`scripts/start.ps1` or `uv run python -m src.host.app`) without building
+the UI, the API still works but the browser will show
+`{"ui": "not built", ...}` — run `app/scripts/build_ui.ps1` once and
+restart the backend to fix that.
+
 ## Repository contents
 
 ```text

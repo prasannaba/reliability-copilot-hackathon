@@ -1,0 +1,4 @@
+# Generated assembly (baseline clone + applied patch) — not part of the submission
+app/
+# Local secrets — never commit
+.env

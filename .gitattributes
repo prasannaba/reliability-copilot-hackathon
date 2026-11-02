@@ -1,0 +1,4 @@
+# Patch and shell script must be byte-stable on every platform:
+# CRLF conversion would corrupt the patch and break setup.sh on Linux/macOS.
+patches/*.patch -text
+setup.sh -text

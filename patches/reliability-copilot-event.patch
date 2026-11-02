@@ -962,10 +962,10 @@ index 504858899f3738b33355f914b6994fc74a374f0c..6adcfa747df8592d1d20701b45da49a7
  EXPOSE 8000
  HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 diff --git a/README.md b/README.md
-index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a0804d6bc81 100644
+index e549eec647ca626a0f19e92f408341940b7d9551..d68fcb4d23a042b2ca02dd19a3de17dd5dce48b0 100644
 --- a/README.md
 +++ b/README.md
-@@ -1,199 +1,280 @@
+@@ -1,277 +1,382 @@
  # Reliability Copilot
  
 -**Natural language in. Defensible Weibull paper and B-life out. Company documents stay on disk. The language model never invents β, η, or a warranty call.**
@@ -1134,7 +1134,7 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +    U[React + TypeScript UI] -->|HTTP / SSE| H[FastAPI host]
 +    H --> L[Configured OpenAI-compatible LLM]
 +    H --> C[MCP client]
-+    C --> W[Reliability calc: Weibull, KM, AIC ranking, EDA, growth (9 tools)]
++    C --> W[Reliability calc: Weibull, KM, AIC ranking, EDA, growth, planning (11 tools)]
 +    C --> K[Knowledge retrieval (hybrid Chroma+BM25)]
 +    C --> R[Report export (Markdown)]
 +    D[Local knowledge-base documents] --> I[Parser + incremental index]
@@ -1149,20 +1149,7 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +### Architectural boundaries
  
 -```
-+- **Frontend:** presentation, user input, session interaction, and API communication. It must not duplicate engineering formulas.
-+- **FastAPI host:** HTTP endpoints, streaming, configuration, model communication, MCP client lifecycle, validation at API boundaries, and error translation.
-+- **MCP domain server:** explicit tool schemas and domain operations. Keep tools independently testable.
-+- **Reliability calculation layer:** deterministic functions with typed inputs/outputs and tests; no LLM dependency.
-+- **Knowledge subsystem:** parsing, chunking, indexing, retrieval, and source metadata.
-+- **Report subsystem:** render reports from structured results; do not recalculate or silently alter metrics.
-+- **Configuration:** use environment/configuration mechanisms already established by the repository. Never commit credentials.
-+
-+## Repository layout
-+
-+The following reflects the intended layout; verify exact paths against the checked-out code before editing.
-+
-+```text
- reliability-copilot/
+-reliability-copilot/
 -  knowledge-base/     handbooks, procedures, domain notes (physics: knowledge-base-physics/)
 -  backend/src/host/   generic FastAPI MCP host (no domain code)
 -  backend/src/domains/ pluggable MCP servers: reliability/, physics/ (prompt.md + domain.yaml each)
@@ -1171,6 +1158,24 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 -  docs/               product notes
 -  scripts/            start, desktop WebView, production UI copy
 -  .env.example        copy to .env at this root — never commit secrets
+-```
++- **Frontend:** presentation, user input, session interaction, and API communication. It must not duplicate engineering formulas.
++- **FastAPI host:** HTTP endpoints, streaming, configuration, model communication, MCP client lifecycle, validation at API boundaries, and error translation.
++- **MCP domain server:** explicit tool schemas and domain operations. Keep tools independently testable.
++- **Reliability calculation layer:** deterministic functions with typed inputs/outputs and tests; no LLM dependency.
++- **Knowledge subsystem:** parsing, chunking, indexing, retrieval, and source metadata.
++- **Report subsystem:** render reports from structured results; do not recalculate or silently alter metrics.
++- **Configuration:** use environment/configuration mechanisms already established by the repository. Never commit credentials.
+ 
+-Package-level detail: [backend/README.md](backend/README.md) · [frontend/README.md](frontend/README.md)
++## Repository layout
+ 
+----
++The following reflects the intended layout; verify exact paths against the checked-out code before editing.
+ 
+-## Prerequisites
++```text
++reliability-copilot/
 +├── AGENTS.md
 +├── README.md
 +├── knowledge-base/                 # User-provided procedures and notes
@@ -1182,15 +1187,18 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +│   └── tests/
 +├── frontend/                       # React + TypeScript UI
 +└── scripts/                        # Development/build helpers
- ```
++```
  
--Package-level detail: [backend/README.md](backend/README.md) · [frontend/README.md](frontend/README.md)
+-| Piece | Requirement |
+-| --- | --- |
+-| Python | **3.12+** and [uv](https://docs.astral.sh/uv/) |
+-| Node | Current LTS + npm (for the UI) |
+-| LLM | Required for **chat**. Any OpenAI-compatible server (`LLM_API_BASE`) — llama.cpp, vLLM, Ollama, or cloud |
+-| Embeddings | Local Sentence Transformers (`EMBEDDING_MODEL`, default `all-MiniLM-L6-v2`). First index may download weights unless `EMBEDDING_LOCAL_FILES_ONLY=true` and the model is already cached |
 +> `skills/` at root does not exist; skill specs live at `docs-spec/skills/` and are indexed by `SKILLS_INDEX.md`.
- 
-----
-+## MCP tool responsibilities — 12 tools in `backend/src/domains/reliability/server.py:97`
- 
--## Prerequisites
++
++## MCP tool responsibilities — 14 tools in `backend/src/domains/reliability/server.py:97`
++
 +| Tool | Responsibility |
 +|---|---|
 +| `analyze_weibull` | Validate life data, fit RRY/MLE, return β/η/MTBF/B10/B20/B30 + Weibull paper `backend/src/domains/reliability/plotting.py:294` |
@@ -1205,19 +1213,13 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +| `search_reliability_knowledge` | Hybrid Chroma + BM25 over `knowledge-base/` with source/citation metadata |
 +| `export_reliability_report` | Markdown report from structured tool outputs (tables = tool numbers, not recalculated) |
 +| `calculate_mtbf` | `MTBF = η·Γ(1+1/β)` or `totalTime/failures` via plugin `plugins/mtbf.py` |
- 
--| Piece | Requirement |
--| --- | --- |
--| Python | **3.12+** and [uv](https://docs.astral.sh/uv/) |
--| Node | Current LTS + npm (for the UI) |
--| LLM | Required for **chat**. Any OpenAI-compatible server (`LLM_API_BASE`) — llama.cpp, vLLM, Ollama, or cloud |
--| Embeddings | Local Sentence Transformers (`EMBEDDING_MODEL`, default `all-MiniLM-L6-v2`). First index may download weights unless `EMBEDDING_LOCAL_FILES_ONLY=true` and the model is already cached |
++| `forecast_warranty_failures` | Expected failures by warranty time for a population: Weibull `F(t)` + Binomial(population, F) mean/interval `planning.py` |
++| `plan_demonstration_test` | Zero-failure success-run plan: solve sample size or test duration for target reliability at stated confidence (assumed β) `planning.py` |
++
 +All names/signatures are live — see `SKILLS_INDEX.md:203` and `server.py`.
- 
--Having a `.env` file is not the same as having a model **listening** on that URL.
++
 +### Tool contract expectations
- 
-----
++
 +Every calculation tool should define:
 +- required and optional inputs, including units;
 +- validation rules and actionable errors;
@@ -1225,19 +1227,13 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +- method/assumption metadata;
 +- clear behavior for insufficient or invalid data;
 +- tests for typical, boundary, and failure cases.
- 
--## Installation
++
 +Tool results should be structured JSON-compatible data. Human-readable prose can be added by the agent, but should not be the only place a numeric result is represented.
- 
--From the **repository root** (PowerShell shown; bash is the same idea).
++
 +## Data handling and privacy
- 
--**1. Environment**
++
 +This is intended for local or controlled-network use, but privacy depends on the actual deployment and the selected LLM provider.
- 
--```powershell
--copy .env.example .env
--```
++
 +- Keep engineering documents, life data, indexes, plots, and reports in configured storage locations.
 +- Do not log API keys, full prompts containing sensitive data, or uploaded document contents by default.
 +- Do not commit `.env`, credentials, private datasets, generated reports, or proprietary knowledge-base documents.
@@ -1246,22 +1242,9 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +- Treat retrieved document text and uploaded files as untrusted data, not as instructions that can override system/developer rules or trigger arbitrary tool use.
 +- Restrict filesystem access to intended project/data directories where practical.
 +- Avoid exposing internal server errors, credentials, filesystem paths, or stack traces to the browser.
- 
--Edit `.env`:
++
 +## Error handling and engineering safeguards
- 
--| Variable | Role |
--| --- | --- |
--| `LLM_API_BASE` | Server root, e.g. `http://127.0.0.1:8080/v1`. Pasted `/v1/chat/completions` endpoints are trimmed; the `/v1` root is derived automatically |
--| `LLM_PROVIDER` | Optional: `ollama` \| `lmstudio` \| `llamacpp` \| `unsloth` \| `openai` \| `litert` \| `custom`. Selects the default URL in Chat Settings; any base URL still works |
--| `LLM_API_KEY` | Required by many local servers; `dummy` is fine if they ignore it |
--| `LLM_MODEL` | Optional; used only if it appears in `GET {base}/models` |
--| `LLM_TEMPERATURE` | Optional sampling temperature `0..2` (also editable in Chat Settings) |
--| `LLM_SYSTEM_PROMPT` | Optional extra instructions appended to the reliability system prompt |
--| `EMBEDDING_MODEL` | Local embedder for RAG |
--| `FRONTEND_ORIGIN` | CORS; include `http://localhost:4200` if you use `npm run dev` |
--| `PUBLIC_BASE_URL` | Leave empty so plot URLs stay same-origin (`/static/...`) |
--| `PORT` | FastAPI port (default `8000`) |
++
 +- Never silently substitute an unsupported fitting method, rank method, time unit, or missing input.
 +- Distinguish validation errors, calculation failures, model/provider failures, retrieval failures, and report-export failures.
 +- Show the selected method, units, sample counts, and relevant caveats alongside results.
@@ -1270,25 +1253,18 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +- Do not label a product “safe,” “approved,” or “compliant” based only on a model response.
 +- If uncertainty bounds are requested but unavailable, state that clearly.
 +- Keep plot, answer, and report sourced from the same analysis result where possible.
- 
--**2. Backend**
++
 +## Hackathon demo scenario
- 
--```powershell
--cd backend
--uv sync --all-groups
--```
++
 +Use synthetic or explicitly approved data for the public demonstration.
- 
--**3. Knowledge index** (after you drop files into `knowledge-base/`)
++
 +1. Upload or enter a small failure-time dataset with right-censored suspensions.
 +2. Ask the agent to fit a Weibull distribution using a named supported method.
 +3. Inspect the probability plot, β, η, sample counts, and fit metadata returned by the tool.
 +4. Ask whether a calculated B10 covers a specified mission or warranty duration.
 +5. Ask a procedure-related question and verify the citations point to retrieved documents.
 +6. Export a report and confirm its values match the tool output and plot.
- 
--Accepted: `.md`, `.txt`, `.pdf`, `.doc`, `.docx`, `.ppt`, `.pptx`. Attachments in chat also ingest.
++
 +**Demo success criteria**
 +- The agent calls the appropriate tools instead of inventing metrics.
 +- Failures and suspensions are clearly distinguished.
@@ -1297,25 +1273,17 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +- Report values match the structured analysis result.
 +- Errors and missing inputs are handled honestly.
 +- The demo does not expose proprietary data or API credentials.
- 
--```powershell
--uv run python -m src.knowledge.base
--# first machine, if you need to fetch the embedder:
--uv run python -m src.knowledge.base --download-model
--```
++
 +## Development setup
- 
--The vector store lives under `backend/.rag`.
++
 +Check the existing `backend/README.md`, `frontend/README.md`, scripts, and dependency files before running commands. The commands below reflect the current documented workflow and may need adjustment if the repository has changed.
- 
--**4. Frontend (production bundle, served by FastAPI)**
++
 +### Quick start — Docker (recommended)
- 
--From the repo root:
++
 +No Python/Node toolchain needed — one image builds UI (`node:20`) + backend (`python:3.12`, `torch 2.14.1`) and pre-downloads MiniLM.
  
- ```powershell
--.\scripts\build_ui.ps1
+-Having a `.env` file is not the same as having a model **listening** on that URL.
++```powershell
 +git clone https://github.com/prasannaba/reliability-copilot.git
 +cd reliability-copilot
 +cp .env.example .env   # set LLM_API_BASE + LLM_API_KEY (Baseten) — .env is ignored, never commit real keys
@@ -1327,30 +1295,29 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +# UI: http://localhost:8000
 +# logs: docker compose logs app --tail 50
 +# GPU: docker compose -f docker-compose.yml -f docker-compose.cuda.yml up --build -d
- ```
- 
--That builds the React UI and copies `frontend/dist/frontend/browser` → `backend/static/ui`.
-+### Alternative — local dev (without Docker)
++```
  
 ----
++### Alternative — local dev (without Docker)
+ 
+-## Installation
 +#### Prerequisites
  
--## Running
+-From the **repository root** (PowerShell shown; bash is the same idea).
 +- Python 3.12+ and `uv`
 +- Current Node.js LTS and npm
 +- A configured OpenAI-compatible LLM endpoint for chat
 +- A local embedding model if using local RAG
  
--**Chat in the browser**
+-**1. Environment**
 +#### Configuration
  
 -```powershell
--cd backend
--uv run python -m src.host.app
+-copy .env.example .env
 -```
 +Copy `.env.example` to `.env` and configure only the variables used by the current code. Common settings documented for this project include:
  
--Open [http://localhost:8000](http://localhost:8000). From the repo root you can also use `.\scripts\start.ps1`. Desktop WebView: `.\scripts\start-desktop.ps1`.
+-Edit `.env`:
 +| Variable | Purpose |
 +|---|---|
 +| `LLM_API_BASE` | LLM server root URL |
@@ -1364,83 +1331,125 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +| `PUBLIC_BASE_URL` | Optional base URL for generated links |
 +| `PORT` | FastAPI port; documented default is `8000` |
  
--**Ask:**
+-| Variable | Role |
+-| --- | --- |
+-| `LLM_API_BASE` | Server root, e.g. `http://127.0.0.1:8080/v1`. Pasted `/v1/chat/completions` endpoints are trimmed; the `/v1` root is derived automatically |
+-| `LLM_PROVIDER` | Optional: `ollama` \| `lmstudio` \| `llamacpp` \| `unsloth` \| `openai` \| `litert` \| `custom`. Selects the default URL in Chat Settings; any base URL still works |
+-| `LLM_API_KEY` | Required by many local servers; `dummy` is fine if they ignore it |
+-| `LLM_MODEL` | Optional; used only if it appears in `GET {base}/models` |
+-| `LLM_TEMPERATURE` | Optional sampling temperature `0..2` (also editable in Chat Settings) |
+-| `LLM_SYSTEM_PROMPT` | Optional extra instructions appended to the reliability system prompt |
+-| `EMBEDDING_MODEL` | Local embedder for RAG |
+-| `FRONTEND_ORIGIN` | CORS; include `http://localhost:4200` if you use `npm run dev` |
+-| `PUBLIC_BASE_URL` | Leave empty so plot URLs stay same-origin (`/static/...`) |
+-| `PORT` | FastAPI port (default `8000`) |
 +Do not copy real API keys into issue reports, screenshots, prompts, or committed configuration.
  
--> Fit Weibull to failures 150, 180, 220, 310, 400, 520, 610, 780 with suspensions 800, 800, 1000. Does B10 cover a 200 hour warranty? Cite our Weibull notes.
+-**2. Backend**
 +#### Backend and knowledge index
  
--Metrics in the answer come from tools, not from the model.
-+```powershell
-+cd backend
-+uv sync --all-groups
-+uv run python -m src.knowledge.base
-+```
+ ```powershell
+ cd backend
+ uv sync --all-groups
+-```
+-
+-**3. Knowledge index** (after you drop files into `knowledge-base/`)
+-
+-Accepted: `.md`, `.txt`, `.pdf`, `.doc`, `.docx`, `.ppt`, `.pptx`. Attachments in chat also ingest.
+-
+-```powershell
+ uv run python -m src.knowledge.base
+-# first machine, if you need to fetch the embedder:
+-uv run python -m src.knowledge.base --download-model
+ ```
  
--**Split UI (hot reload)** — terminal 1: backend as above. Terminal 2:
+-The vector store lives under `backend/.rag`.
 +Use `--download-model` only when you intentionally want to download the embedding model and the command supports it.
-+
+ 
+-**4. Frontend (production bundle, served by FastAPI)**
+-
+-From the repo root:
 +#### Frontend development
  
  ```powershell
- cd frontend
-@@ -201,77 +282,99 @@ npm install
- npm run dev
+-.\scripts\build_ui.ps1
++cd frontend
++npm install
++npm run dev
  ```
  
--[http://localhost:4200](http://localhost:4200) proxies `/api`, `/static`, and `/health` to port 8000.
+-That builds the React UI and copies `frontend/dist/frontend/browser` → `backend/static/ui`.
 +The documented development UI is at `http://localhost:4200`, with API routes proxied to the backend at port `8000`. Confirm the current Vite configuration before relying on these ports.
-+
-+#### Run the host
-+
-+```powershell
-+cd backend
-+uv run python -m src.host.app
-+```
  
 ----
+-
+-## Running
+-
+-**Chat in the browser**
++#### Run the host
+ 
+ ```powershell
+ cd backend
+ uv run python -m src.host.app
+ ```
+ 
+-Open [http://localhost:8000](http://localhost:8000). From the repo root you can also use `.\scripts\start.ps1`. Desktop WebView: `.\scripts\start-desktop.ps1`.
+-
+-**Ask:**
 +The documented local URL is `http://localhost:8000`. See `scripts/` (`run.ps1`, `dev.ps1`, `mcp.ps1`, `build_ui.ps1`) for one-command alternatives.
  
--## Running with Docker
+-> Fit Weibull to failures 150, 180, 220, 310, 400, 520, 610, 780 with suspensions 800, 800, 1000. Does B10 cover a 200 hour warranty? Cite our Weibull notes.
 +## Quality checks
  
--One image, three roles (see `docker-compose.yml`): the `app` host (API + UI on `:8000`) plus standalone MCP servers (`mcp-reliability` on `:8001`, opt-in `mcp-physics` on `:8002`). From the repo root:
+-Metrics in the answer come from tools, not from the model.
+-
+-**Split UI (hot reload)** — terminal 1: backend as above. Terminal 2:
 +Run the checks that exist in the repository; do not claim a check passed unless it was actually run.
  
  ```powershell
--copy .env.example .env
--docker compose up --build -d
+-cd frontend
+-npm install
+-npm run dev
 +cd backend
 +uv run pytest
 +uvx ruff format .
 +uvx ruff check .
  ```
  
--Open [http://localhost:8000](http://localhost:8000). No LLM provider is pre-selected: on first run, open Settings in the sidebar and pick yours — the choice persists across restarts.
-+```powershell
+-[http://localhost:4200](http://localhost:4200) proxies `/api`, `/static`, and `/health` to port 8000.
+-
+----
+-
+-## Running with Docker
+-
+-One image, three roles (see `docker-compose.yml`): the `app` host (API + UI on `:8000`) plus standalone MCP servers (`mcp-reliability` on `:8001`, opt-in `mcp-physics` on `:8002`). From the repo root:
+-
+ ```powershell
+-copy .env.example .env
+-docker compose up --build -d
 +cd frontend
 +npx --yes prettier@3 --check "src/**/*.{ts,tsx,css,json}" "package.json" "tsconfig.json" "vite.config.ts"
-+```
+ ```
  
--**If you already run an LLM** (Ollama, LM Studio, llama.cpp, LiteRT-LM) on your machine, nothing else is needed. A `localhost`/`127.0.0.1` URL works as-is: inside the container it is automatically mapped to your host. Your `knowledge-base/`, index (`backend/.rag`), plots, and reports are bind-mounted, so they survive image upgrades.
+-Open [http://localhost:8000](http://localhost:8000). No LLM provider is pre-selected: on first run, open Settings in the sidebar and pick yours — the choice persists across restarts.
 +Add or update tests whenever a tool contract, calculation, API response, or user-visible workflow changes.
  
--**If you have no local LLM**, the compose file ships a dormant Ollama server for onboarding. Be aware of what it is and isn't:
+-**If you already run an LLM** (Ollama, LM Studio, llama.cpp, LiteRT-LM) on your machine, nothing else is needed. A `localhost`/`127.0.0.1` URL works as-is: inside the container it is automatically mapped to your host. Your `knowledge-base/`, index (`backend/.rag`), plots, and reports are bind-mounted, so they survive image upgrades.
 +## Scope and non-goals
+ 
+-**If you have no local LLM**, the compose file ships a dormant Ollama server for onboarding. Be aware of what it is and isn't:
++**In scope:** traceable life-data analysis, tool-backed B-life calculations, document-grounded Q&A, configurable inference, MCP-based domain tools, and report generation.
  
 -1. `docker compose --profile local-llm up --build -d` pulls the public `ollama/ollama` image (several GB, first time only) and starts an **empty** engine — it serves no models yet.
 -2. Add a model: `docker compose exec ollama ollama pull llama3.1:8b` (weight download, persists in the `ollama-models` volume), *or* `docker compose exec ollama ollama signin` for Ollama cloud models (needs an Ollama account, no weight download).
 -3. In the app's Settings, select provider `ollama` (the container reaches it at `http://ollama:11434`).
-+**In scope:** traceable life-data analysis, tool-backed B-life calculations, document-grounded Q&A, configurable inference, MCP-based domain tools, and report generation.
- 
--Notes: containerized inference runs on CPU unless you configure GPU passthrough, so for everyday use the native Ollama Desktop app on your machine is usually the better LLM host.
 +**Not a goal:** replacing a qualified reliability engineer, guaranteeing a warranty decision, automatically certifying compliance, training a foundation model, or presenting unsupported estimates as calculated results.
  
--Set `ACTIVE_DOMAIN=physics` in `.env` (plus `--profile physics`) to run the physics pack instead — no code changes.
+-Notes: containerized inference runs on CPU unless you configure GPU passthrough, so for everyday use the native Ollama Desktop app on your machine is usually the better LLM host.
 +## Implementation status — 5.1.1 verified
  
-----
-+- [x] Tool schemas vs `server.py:97` + `SKILLS_INDEX.md:203` (12 tools)
+-Set `ACTIVE_DOMAIN=physics` in `.env` (plus `--profile physics`) to run the physics pack instead — no code changes.
++- [x] Tool schemas vs `server.py:97` + `SKILLS_INDEX.md` (14 tools)
 +- [x] Weibull paper shows failures `o` vs suspensions `+`, Bernard/Herd-Johnson, RRY/MLE, bootstrap band
 +- [x] B-life `B_p = η·[-ln(1−p)]^{1/β}` unit `hours` validated
 +- [x] Citations carry `source` + `chunk_number` + `score` (`knowledge/base.py:672`)
@@ -1448,8 +1457,11 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +- [x] Missing/invalid data, insufficient samples, provider failure handled with actionable errors
 +- [x] `.env` + `.llm_secret.enc` + `.rag` + `backend/static/*.png` ignored (no secrets in image)
  
--## MCP tools (the numbers)
+----
 +## Hackathon provenance
+ 
+-## MCP tools (the numbers)
++The event started Oct 26 and this repo's history begins Oct 28 (`e1c1989`, the root commit) — verify with `git log --format='%h %ad %s' --date=short`. Every commit here is in-window work; only the upstream contents predating the fork are foundation, not a claim.
  
 -| Tool | Computes |
 -| --- | --- |
@@ -1458,25 +1470,24 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 -| `search_reliability_knowledge` | Hybrid retrieval over the indexed KB |
 -| `export_reliability_report` | One-page markdown from **tool** outputs |
 -| `calculate_mtbf` | Plugin under `backend/plugins/` |
-+The event started Oct 26 and this repo's history begins Oct 28 (`e1c1989`, the root commit) — verify with `git log --format='%h %ad %s' --date=short`. Every commit here is in-window work; only the upstream contents predating the fork are foundation, not a claim.
- 
--Add a plugin: `backend/src/domains/<name>/plugins/<tool>.py` with `def register(mcp):`. Server lists: `backend/config/mcp_servers.<domain>.json` (stdio or HTTP entries). Swap domains with `ACTIVE_DOMAIN=physics` — no FastAPI changes.
 +### Agent and chat (single-Agent loop)
  
--Standalone domain servers (usable from Open Web UI / Unsloth Studio without the FastAPI app):
+-Add a plugin: `backend/src/domains/<name>/plugins/<tool>.py` with `def register(mcp):`. Server lists: `backend/config/mcp_servers.<domain>.json` (stdio or HTTP entries). Swap domains with `ACTIVE_DOMAIN=physics` — no FastAPI changes.
 +- `cff791f` — Plan, Interactive, and Ask modes first built out as a real mode system (mode selector, `create_life_data_plan` / `ask_life_data_question` tools, per-mode contracts and tests).
 +- `eb802e0` — modes superseded by one Agent mode: plan/ask kept as code-enforced internal behaviors, conversation ledger with short follow-up directive, KB-gating, deterministic hash-based plot filenames with cite-instead-of-regenerate, MiniLM default embedder with warmed preload. `test_chat_mode.py` removed with the selector.
 +- `812a140` — streaming filter keeping `meta-spark` scaffolding (`<|start|>`, `assistant to=`, Thought/Action lines) out of chat; thinking runs in the background with a status line.
 +- `f827cc8` — Meta + Baseten providers, Baseten default.
 +- `4201174`, `42daf21`, `ed11a9b`, `7c303f3` — composer, per-session prompt history, accessibility polish, model-picker close-on-select.
  
+-Standalone domain servers (usable from Open Web UI / Unsloth Studio without the FastAPI app):
++### Calculations and plots
+ 
 -```powershell
 -cd backend
 -uv run python -m src.domains.reliability.server --transport streamable-http --port 8001
 -# tools at http://localhost:8001/mcp
 -```
-+### Calculations and plots
- 
+-
 -or `docker compose up --build` (starts `app` + `mcp-reliability`; `--profile physics` adds the physics server on `:8002`).
 +- `5600fc9` — Weibull probability paper redesigned against reference paper: correct ln(ln) Y scale, 0.10–99.9 % tight limits, compact beta gauge, yellow header band.
 +- `e84fe7b` — paper x-axis starts at 10^0 (1), not 10^-1.
@@ -1533,10 +1544,10 @@ index e549eec647ca626a0f19e92f408341940b7d9551..76bced617237cf203d355b5d614b8a08
 +**Reliability maths is code. Retrieval supplies evidence. The LLM orchestrates and explains.**
 diff --git a/SKILLS_INDEX.md b/SKILLS_INDEX.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..c499f157c69e9787126f310d7091431974a1dae0
+index 0000000000000000000000000000000000000000..07c0d8bb40978ce88397f780fd451d9adf05d0c7
 --- /dev/null
 +++ b/SKILLS_INDEX.md
-@@ -0,0 +1,392 @@
+@@ -0,0 +1,406 @@
 +# Application Skills Overview
 +
 +This document provides an overview of the Reliability AI Agent's capabilities, organized by domain. Each skill is documented in detail in the `skills/` directory.
@@ -1615,6 +1626,20 @@ index 0000000000000000000000000000000000000000..c499f157c69e9787126f310d70914319
 +
 +**MCP Tool**: `calculate_mtbf` (plugin)
 +**Implementation**: `backend/src/domains/reliability/plugins/mtbf.py`
++
++### Warranty Forecast & Demonstration-Test Planning
++**File**: `skills/reliability-domain/warranty-planning.md`
++
++Forecasts field failures within a warranty period and plans zero-failure demonstration tests. Both are deterministic and assumption-explicit; missing population/duration/target inputs must be asked for, never assumed.
++
++**Key Features**:
++- Warranty forecast: Weibull CDF at warranty time + Binomial(population, F) expectation and central interval
++- Demonstration plan: success-run relation `C = 1 - R^(n*(t/mission_time)^beta)`, solving sample size or test duration
++- States independence/exposure assumptions and that fit uncertainty is not propagated into the forecast interval
++
++**MCP Tools**: `forecast_warranty_failures`, `plan_demonstration_test`
++**Implementation**: `backend/src/domains/reliability/tools/planning.py`
++**Core Math**: `backend/src/domains/reliability/planning.py`
 +
 +### Knowledge Search
 +**File**: `skills/reliability-domain/knowledge-search.md`
@@ -3572,6 +3597,167 @@ index 0000000000000000000000000000000000000000..3af70e039cda0ee660f7731b9b58dd99
 +    else:
 +        label = "approximately-constant"
 +    return {"slope": slope, "hazard": label}
+diff --git a/backend/src/domains/reliability/planning.py b/backend/src/domains/reliability/planning.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..f7889f28bdf8c4c7a6502dcdf3182e90516154ad
+--- /dev/null
++++ b/backend/src/domains/reliability/planning.py
+@@ -0,0 +1,155 @@
++"""Reliability planning calculations: warranty forecast + demonstration tests.
++
++Both functions are deterministic and assumption-explicit: the LLM never
++estimates these values. The warranty forecast treats fielded units as
++independent draws from one fitted Weibull life distribution. The
++demonstration-test plan is the classical zero-failure (success-run) plan
++under an assumed, known Weibull shape parameter.
++"""
++
++from __future__ import annotations
++
++import math
++from typing import Any
++
++import numpy as np
++from scipy.stats import binom
++
++
++def _positive_finite(name: str, value: float) -> float:
++    out = float(value)
++    if not math.isfinite(out) or out <= 0:
++        raise ValueError(f"{name} must be positive and finite")
++    return out
++
++
++def _probability(name: str, value: float) -> float:
++    out = float(value)
++    if not math.isfinite(out) or not 0.0 < out < 1.0:
++        raise ValueError(f"{name} must be between 0 and 1 (exclusive)")
++    return out
++
++
++def _units(units: str) -> str:
++    out = str(units or "").strip()
++    if not out:
++        raise ValueError("units must be a non-empty time unit (e.g. 'hours')")
++    return out
++
++
++def warranty_failure_forecast(
++    beta: float,
++    eta: float,
++    warranty_time: float,
++    population: int,
++    confidence: float = 0.90,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Expected warranty failures for a fielded population.
++
++    With Weibull CDF ``F(t) = 1 - exp(-(t/eta)**beta)``, each of the
++    ``population`` independent units fails by ``warranty_time`` with
++    probability ``F(warranty_time)``; the failure count is therefore
++    Binomial(population, F). Returns the mean count and the central
++    ``confidence`` binomial interval.
++    """
++    beta = _positive_finite("beta", beta)
++    eta = _positive_finite("eta", eta)
++    warranty_time = _positive_finite("warranty_time", warranty_time)
++    confidence = _probability("confidence", confidence)
++    units = _units(units)
++    if int(population) != population or int(population) <= 0:
++        raise ValueError("population must be a positive whole number")
++    population = int(population)
++
++    reliability = float(np.exp(-((warranty_time / eta) ** beta)))
++    failure_probability = 1.0 - reliability
++    expected = population * failure_probability
++    alpha = (1.0 - confidence) / 2.0
++    lower = int(binom.ppf(alpha, population, failure_probability))
++    upper = int(binom.ppf(1.0 - alpha, population, failure_probability))
++    return {
++        "beta": beta,
++        "eta": eta,
++        "warranty_time": warranty_time,
++        "units": units,
++        "population": population,
++        "reliability_at_warranty": reliability,
++        "failure_probability_by_warranty": failure_probability,
++        "expected_failures": float(expected),
++        "failure_count_interval": [lower, upper],
++        "confidence": confidence,
++        "method": "Weibull CDF at warranty_time; Binomial(population, F) mean and central interval",
++        "assumptions": [
++            "Units are independent and share the fitted Weibull(beta, eta) life distribution",
++            "Every unit accumulates warranty_time of exposure (no staggered entry or early removal)",
++            "beta/eta come from a fit tool; uncertainty in beta/eta is not propagated into this interval",
++        ],
++    }
++
++
++def demonstration_test_plan(
++    target_reliability: float,
++    confidence: float,
++    assumed_beta: float,
++    mission_time: float,
++    sample_size: int | None = None,
++    test_duration: float | None = None,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Zero-failure (success-run) demonstration test plan.
++
++    To demonstrate reliability ``R`` at ``mission_time`` with confidence
++    ``C`` when the Weibull shape ``beta`` is assumed known, testing ``n``
++    units for ``t`` each with zero failures satisfies
++
++        C = 1 - R ** (n * (t / mission_time) ** beta)
++
++    Exactly one of ``sample_size`` / ``test_duration`` must be given; the
++    other is solved for.
++    """
++    target_reliability = _probability("target_reliability", target_reliability)
++    confidence = _probability("confidence", confidence)
++    assumed_beta = _positive_finite("assumed_beta", assumed_beta)
++    mission_time = _positive_finite("mission_time", mission_time)
++    units = _units(units)
++    if (sample_size is None) == (test_duration is None):
++        raise ValueError("provide exactly one of sample_size or test_duration")
++
++    log_ratio = math.log(1.0 - confidence) / math.log(target_reliability)  # > 0
++    if test_duration is not None:
++        duration = _positive_finite("test_duration", test_duration)
++        ratio = duration / mission_time
++        exact_n = log_ratio / (ratio**assumed_beta)
++        n = max(1, math.ceil(exact_n))
++        mode = "required_sample_size"
++    else:
++        if int(sample_size) != sample_size or int(sample_size) <= 0:  # type: ignore[arg-type]
++            raise ValueError("sample_size must be a positive whole number")
++        n = int(sample_size)  # type: ignore[arg-type]
++        ratio = (log_ratio / n) ** (1.0 / assumed_beta)
++        duration = ratio * mission_time
++        exact_n = float(n)
++        mode = "required_test_duration"
++
++    achieved = 1.0 - target_reliability ** (n * (duration / mission_time) ** assumed_beta)
++    return {
++        "mode": mode,
++        "target_reliability": target_reliability,
++        "confidence": confidence,
++        "achieved_confidence": float(achieved),
++        "assumed_beta": assumed_beta,
++        "mission_time": mission_time,
++        "test_duration": float(duration),
++        "sample_size": n,
++        "units": units,
++        "zero_failures_allowed": 0,
++        "method": "Zero-failure success run: C = 1 - R^(n*(t/mission_time)^beta), solved for the requested unknown",
++        "assumptions": [
++            "Weibull shape (assumed_beta) is known/assumed; only the scale is being demonstrated",
++            "Units are independent and identical, each tested for the full test_duration",
++            "The plan succeeds only with zero failures; one failure invalidates the demonstration",
++            f"Demonstrated claim is reliability >= {target_reliability} at {mission_time} {units}, not a fitted life estimate",
++        ],
++        "exact_sample_size_before_rounding": float(exact_n),
++    }
 diff --git a/backend/src/domains/reliability/plotting.py b/backend/src/domains/reliability/plotting.py
 new file mode 100644
 index 0000000000000000000000000000000000000000..b85afe6f155be3135d33b8dced3ed22cb7412bad
@@ -4387,10 +4573,10 @@ index 0000000000000000000000000000000000000000..b85afe6f155be3135d33b8dced3ed22c
 +        plt.close(fig)
 +    return {"file": save_path}
 diff --git a/backend/src/domains/reliability/prompt.md b/backend/src/domains/reliability/prompt.md
-index a7df175422ddf2e966938694acd0a456772aba22..c0c985f844a97bcb0a5d50f4b7776f2f31260075 100644
+index a7df175422ddf2e966938694acd0a456772aba22..a2c659be729a5a7a9446c15097318434f502fcc1 100644
 --- a/backend/src/domains/reliability/prompt.md
 +++ b/backend/src/domains/reliability/prompt.md
-@@ -1 +1,46 @@
+@@ -1 +1,48 @@
 -You are a Reliability Copilot: a local assistant for reliability engineering. Never invent numeric lives (MTBF, B10/B20/B30, β, η). Always call MCP tools (analyze_weibull, calculate_b_life, calculate_mtbf, export_reliability_report) for those quantities. If a tool cannot be run, say you cannot give a number. Use search_reliability_knowledge for procedures, handbook questions, and any factual who/what question about people, documents, or local notes. When local knowledge-base context is provided with the question, use it and cite its source. When a plot is created, mention its filename and summarize β, η, sample (failures vs suspensions), method (RRY or MLE), bounds if present, and meaning. For warranty questions, compare B10/B20/B30 to the warranty period using tool output. This product complements commercial solvers such as ReliaSoft Weibull++; do not claim to replace them. Use LaTeX for mathematics and answer in technically rigorous Markdown.
 +# Reliability Copilot — system prompt
 +
@@ -4427,6 +4613,8 @@ index a7df175422ddf2e966938694acd0a456772aba22..c0c985f844a97bcb0a5d50f4b7776f2f
 +- "How should I analyse this": explain the workflow from expertise and KB context (KM reference, AIC selection, fit, B-lives, report); compute as soon as data is given.
 +- Documents, procedures, standards, people, local notes: `search_reliability_knowledge`, with source citations. Never force a search into an unrelated answer.
 +- Growth: `analyze_reliability_growth` / `forecast_growth_mtbf`; report Duane α/R², Crow-AMSAA β/λ/MTBF/CvM, β<1 means growth.
++- Warranty planning: `forecast_warranty_failures` needs fitted β/η, warranty duration (same units as η), population size, and units; report expected failures plus the binomial interval and the assumptions (independent units, full exposure, fit uncertainty not propagated). Never run it without an explicit population and duration.
++- Demonstration testing: `plan_demonstration_test` (zero-failure success run) needs target reliability, confidence, assumed β, mission time, units, and exactly one of sample size / test duration; report the solved value, achieved confidence, and the zero-failure condition.
 +
 +## 5. Reply shape
 +
@@ -4451,10 +4639,10 @@ index 1c3c519e970e957b15dac3f112c73f7115b3bfa9..a1748a0b7249df276b125a83979de115
          ]
      )
 diff --git a/backend/src/domains/reliability/server.py b/backend/src/domains/reliability/server.py
-index 534fdb831fcbd57f7e7b15fc7b350c10527402b6..73567e8ea9f45a0103371c7f209dc775bf4e6225 100644
+index 534fdb831fcbd57f7e7b15fc7b350c10527402b6..0173e2adc742c8f4e3a9ea26b83e6eb6579c8104 100644
 --- a/backend/src/domains/reliability/server.py
 +++ b/backend/src/domains/reliability/server.py
-@@ -53,7 +53,12 @@ from mcp.server.mcpserver import (  # noqa: E402
+@@ -53,7 +53,13 @@ from mcp.server.mcpserver import (  # noqa: E402
  from mcp_types import CallToolResult, ContentBlock, TextContent  # noqa: E402
  
  from src.domains.reliability.tools import blife as _blife  # noqa: E402
@@ -4464,13 +4652,61 @@ index 534fdb831fcbd57f7e7b15fc7b350c10527402b6..73567e8ea9f45a0103371c7f209dc775
  from src.domains.reliability.tools import knowledge_tool as _knowledge  # noqa: E402
 +from src.domains.reliability.tools import life_table as _life_table  # noqa: E402
 +from src.domains.reliability.tools import nonparametric as _nonparametric  # noqa: E402
++from src.domains.reliability.tools import planning as _planning  # noqa: E402
  from src.domains.reliability.tools import report as _report  # noqa: E402
  from src.domains.reliability.tools import weibull as _weibull  # noqa: E402
  from src.domains.reliability.tools._common import STATIC_DIR  # noqa: E402
-@@ -129,6 +134,17 @@ def analyze_weibull(
+@@ -129,6 +135,64 @@ def analyze_weibull(
      return CallToolResult(content=content, structured_content=result)
  
  
++@mcp.tool()
++def forecast_warranty_failures(
++    beta: float,
++    eta: float,
++    warranty_time: float,
++    population: int,
++    confidence: float = 0.90,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Forecast expected warranty failures for a fielded population from fitted Weibull beta/eta.
++
++    Returns the Weibull failure probability by warranty_time, the Binomial
++    mean failure count for the population, and a central interval. Requires
++    beta/eta from a fit, plus explicit warranty_time (in eta's units),
++    population size, and units.
++    """
++    return _planning.forecast_warranty_failures(
++        beta, eta, warranty_time, population, confidence=confidence, units=units
++    )
++
++
++@mcp.tool()
++def plan_demonstration_test(
++    target_reliability: float,
++    confidence: float,
++    assumed_beta: float,
++    mission_time: float,
++    sample_size: int | None = None,
++    test_duration: float | None = None,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Plan a zero-failure (success-run) demonstration test for a reliability target.
++
++    Provide exactly one of sample_size or test_duration; the other is solved
++    for. Assumes a known Weibull shape (assumed_beta) and zero failures.
++    """
++    return _planning.plan_demonstration_test(
++        target_reliability,
++        confidence,
++        assumed_beta,
++        mission_time,
++        sample_size=sample_size,
++        test_duration=test_duration,
++        units=units,
++    )
++
++
 +@mcp.tool()
 +def parse_life_data_table(table: str) -> dict[str, Any]:
 +    """Parse a pasted Time/Censored/Frequency table into validated unit arrays.
@@ -4485,7 +4721,7 @@ index 534fdb831fcbd57f7e7b15fc7b350c10527402b6..73567e8ea9f45a0103371c7f209dc775
  @mcp.tool()
  def export_reliability_report(
      failure_times: list[float],
-@@ -161,6 +177,111 @@ def export_reliability_report(
+@@ -161,6 +225,113 @@ def export_reliability_report(
      return CallToolResult(content=content, structured_content=result)
  
  
@@ -4550,7 +4786,9 @@ index 534fdb831fcbd57f7e7b15fc7b350c10527402b6..73567e8ea9f45a0103371c7f209dc775
 +    censored_times: list[float] | None = None,
 +) -> dict[str, Any]:
 +    """Right-censored MLE for one life-distribution family (exponential, weibull, normal, lognormal, logistic, loglogistic, gumbel-sev) with AIC."""
-+    return _distributions.fit_life_distribution(family, censored_times=censored_times, failure_times=failure_times)
++    return _distributions.fit_life_distribution(
++        family, censored_times=censored_times, failure_times=failure_times
++    )
 +
 +
 +@mcp.tool()
@@ -5049,6 +5287,57 @@ index 0000000000000000000000000000000000000000..01a6aa3c5c9d54985e750e98f9ee10b3
 +    normalized["file"] = Path(plot["file"]).name
 +    normalized["message"] = f"Kaplan-Meier plot saved as {Path(plot['file']).name}"
 +    return normalized
+diff --git a/backend/src/domains/reliability/tools/planning.py b/backend/src/domains/reliability/tools/planning.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..3a87c12de5fdf3869cb4a66fdce8270badc19655
+--- /dev/null
++++ b/backend/src/domains/reliability/tools/planning.py
+@@ -0,0 +1,45 @@
++"""Planning MCP tool wrappers (plain functions; registered in server.py)."""
++
++from __future__ import annotations
++
++from typing import Any
++
++from src.domains.reliability.planning import demonstration_test_plan, warranty_failure_forecast
++
++
++def forecast_warranty_failures(
++    beta: float,
++    eta: float,
++    warranty_time: float,
++    population: int,
++    confidence: float = 0.90,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Forecast warranty failures for a population from fitted Weibull beta/eta."""
++    return warranty_failure_forecast(
++        beta, eta, warranty_time, population, confidence=confidence, units=units
++    )
++
++
++def plan_demonstration_test(
++    target_reliability: float,
++    confidence: float,
++    assumed_beta: float,
++    mission_time: float,
++    sample_size: int | None = None,
++    test_duration: float | None = None,
++    units: str = "hours",
++) -> dict[str, Any]:
++    """Plan a zero-failure demonstration test (success-run) for a reliability target."""
++    return demonstration_test_plan(
++        target_reliability,
++        confidence,
++        assumed_beta,
++        mission_time,
++        sample_size=sample_size,
++        test_duration=test_duration,
++        units=units,
++    )
++
++
++__all__ = ["forecast_warranty_failures", "plan_demonstration_test"]
 diff --git a/backend/src/domains/reliability/tools/weibull.py b/backend/src/domains/reliability/tools/weibull.py
 index 58206338789db732abdf5cee049057605782ebe1..2ea717e755682df94b9d870928f2702bb6e1f057 100644
 --- a/backend/src/domains/reliability/tools/weibull.py
@@ -9244,6 +9533,92 @@ index 44f8e2ffcad91b7697a1d2ccb664f792099bc845..c884697cd9cf8a9b148fbaed79a1f780
 +    assert r"\sb" not in patched
      assert patched.strip().startswith("$$")
      assert "[" not in patched.split("$$")[1][:2]
+diff --git a/backend/tests/test_planning.py b/backend/tests/test_planning.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..38d030cd889a149d854507ef643cb24302e41228
+--- /dev/null
++++ b/backend/tests/test_planning.py
+@@ -0,0 +1,80 @@
++"""Warranty forecast + demonstration-test planning tools."""
++
++from __future__ import annotations
++
++import pytest
++
++from src.domains.reliability.planning import demonstration_test_plan, warranty_failure_forecast
++from src.domains.reliability.tools.planning import (
++    forecast_warranty_failures,
++    plan_demonstration_test,
++)
++
++
++def test_warranty_forecast_exponential_case():
++    # beta=1, eta=1000, t=100 -> F = 1-exp(-0.1) = 0.0951626; mean of 1000 = 95.16
++    out = warranty_failure_forecast(1.0, 1000.0, 100.0, 1000)
++    assert out["failure_probability_by_warranty"] == pytest.approx(0.0951626, abs=1e-6)
++    assert out["expected_failures"] == pytest.approx(95.1626, abs=1e-3)
++    lower, upper = out["failure_count_interval"]
++    assert lower < out["expected_failures"] < upper
++    assert out["units"] == "hours"
++
++
++def test_warranty_forecast_wrapper_and_units():
++    out = forecast_warranty_failures(2.0, 500.0, 250.0, 100, units="cycles")
++    assert out["population"] == 100
++    assert out["units"] == "cycles"
++    assert 0.0 < out["reliability_at_warranty"] < 1.0
++
++
++@pytest.mark.parametrize(
++    "kwargs",
++    [
++        {"beta": 0.0, "eta": 100.0, "warranty_time": 10.0, "population": 10},
++        {"beta": 1.0, "eta": -1.0, "warranty_time": 10.0, "population": 10},
++        {"beta": 1.0, "eta": 100.0, "warranty_time": 0.0, "population": 10},
++        {"beta": 1.0, "eta": 100.0, "warranty_time": 10.0, "population": 0},
++        {"beta": 1.0, "eta": 100.0, "warranty_time": 10.0, "population": 2.5},
++        {"beta": 1.0, "eta": 100.0, "warranty_time": 10.0, "population": 10, "confidence": 1.0},
++        {"beta": float("nan"), "eta": 100.0, "warranty_time": 10.0, "population": 10},
++    ],
++)
++def test_warranty_forecast_rejects_invalid(kwargs):
++    with pytest.raises(ValueError):
++        warranty_failure_forecast(**kwargs)
++
++
++def test_demo_plan_sample_size_at_mission_duration():
++    # R=0.9, C=0.9, beta=1, t=mission -> n = ln(0.1)/ln(0.9) = 21.85 -> 22
++    out = demonstration_test_plan(0.90, 0.90, 1.0, 1000.0, test_duration=1000.0)
++    assert out["mode"] == "required_sample_size"
++    assert out["sample_size"] == 22
++    assert out["exact_sample_size_before_rounding"] == pytest.approx(21.854, abs=1e-3)
++    assert out["achieved_confidence"] >= 0.90
++
++
++def test_demo_plan_longer_test_needs_fewer_units():
++    # Doubling test duration with beta=2 divides the required n by 4.
++    out = demonstration_test_plan(0.90, 0.90, 2.0, 1000.0, test_duration=2000.0)
++    assert out["sample_size"] == 6  # ceil(21.854 / 4)
++
++
++def test_demo_plan_solves_duration_for_sample_size():
++    # n=10, beta=1 -> ratio = (ln(0.1)/(10 ln(0.9))) = 2.1854 -> 2185.4 h for 1000 h mission
++    out = plan_demonstration_test(0.90, 0.90, 1.0, 1000.0, sample_size=10)
++    assert out["mode"] == "required_test_duration"
++    assert out["test_duration"] == pytest.approx(2185.4, abs=1.0)
++    assert out["achieved_confidence"] == pytest.approx(0.90, abs=1e-9)
++    assert out["zero_failures_allowed"] == 0
++
++
++def test_demo_plan_rejects_invalid():
++    with pytest.raises(ValueError):
++        demonstration_test_plan(0.90, 0.90, 1.0, 1000.0)  # neither unknown given
++    with pytest.raises(ValueError):
++        demonstration_test_plan(0.90, 0.90, 1.0, 1000.0, sample_size=10, test_duration=10.0)
++    with pytest.raises(ValueError):
++        demonstration_test_plan(1.0, 0.90, 1.0, 1000.0, sample_size=10)  # R must be < 1
++    with pytest.raises(ValueError):
++        demonstration_test_plan(0.90, 0.90, 0.0, 1000.0, sample_size=10)  # beta > 0
 diff --git a/backend/tests/test_plot_naming.py b/backend/tests/test_plot_naming.py
 new file mode 100644
 index 0000000000000000000000000000000000000000..8bfc855eb01a7e582ec7ee01e3939e548b628ea3
@@ -165442,6 +165817,75 @@ index 0000000000000000000000000000000000000000..57cb8db07dee232b98c01d6306979982
 +- Template: `backend/src/domains/reliability/reliability_report.py`
 +- Server: `backend/src/domains/reliability/server.py`
 +- Static output: `backend/static/reliability_report.md`
+diff --git a/skills/reliability-domain/warranty-planning.md b/skills/reliability-domain/warranty-planning.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..7609496ccb872d207343c7109b055e5ecf2e8202
+--- /dev/null
++++ b/skills/reliability-domain/warranty-planning.md
+@@ -0,0 +1,63 @@
++# Warranty Planning Skill
++
++## Overview
++
++Two deterministic planning calculations built on a fitted (or stated) Weibull
++life distribution: how many field failures to expect inside a warranty
++period, and how to size a zero-failure demonstration test. No values are
++estimated by the LLM; missing inputs are asked for, never assumed.
++
++## MCP Tools
++
++### forecast_warranty_failures
++
++```python
++def forecast_warranty_failures(
++    beta: float, eta: float, warranty_time: float, population: int,
++    confidence: float = 0.90, units: str = "hours",
++) -> dict[str, Any]
++```
++
++**Parameters:** fitted beta/eta (>0, finite), warranty_time (>0, same units
++as eta), population (positive whole number), confidence in (0, 1), units.
++
++**Returns:** `{ reliability_at_warranty, failure_probability_by_warranty,
++expected_failures, failure_count_interval, method, assumptions, ... }`
++
++Each unit fails by warranty_time with probability `F(t) = 1 - exp(-(t/eta)^beta)`;
++the count is Binomial(population, F), and the interval is its central
++binomial interval. Fit uncertainty in beta/eta is stated as not propagated.
++
++### plan_demonstration_test
++
++```python
++def plan_demonstration_test(
++    target_reliability: float, confidence: float, assumed_beta: float,
++    mission_time: float, sample_size: int | None = None,
++    test_duration: float | None = None, units: str = "hours",
++) -> dict[str, Any]
++```
++
++**Parameters:** target reliability and confidence in (0, 1), assumed
++(known) Weibull beta, mission_time, and exactly one of sample_size /
++test_duration.
++
++**Returns:** `{ mode, sample_size, test_duration, achieved_confidence,
++zero_failures_allowed, method, assumptions, ... }`
++
++Solves the success-run relation `C = 1 - R^(n*(t/mission_time)^beta)` for
++the unknown. Sample sizes are rounded up; achieved confidence is reported.
++
++## Implementation
++
++- `backend/src/domains/reliability/planning.py` — `warranty_failure_forecast`, `demonstration_test_plan`
++- `backend/src/domains/reliability/tools/planning.py` — tool wrappers
++- `backend/tests/test_planning.py`
++
++## Interpretation
++
++- Expected warranty failures scale linearly with population at fixed F(t);
++  widen the interval by raising `confidence`.
++- A demonstration plan proves only the stated claim (reliability >= R at the
++  mission time, at the stated confidence, under the assumed beta) and only
++  if the test finishes with zero failures.
 diff --git a/skills/reliability-domain/weibull-analysis.md b/skills/reliability-domain/weibull-analysis.md
 new file mode 100644
 index 0000000000000000000000000000000000000000..6cb30db31e709fe5568a758a58c554599994440a

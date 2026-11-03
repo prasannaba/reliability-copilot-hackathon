@@ -4,7 +4,7 @@
 set -euo pipefail
 
 UPSTREAM="https://github.com/prasannaba/reliability-ai-agent.git"
-PIN="02f2b6b93284cf1478abc79cdd3145b24576b5b8"
+PIN="688b1c7e1c04d1cd50886a81278a5a5d174e3203"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH="$ROOT/patches/reliability-copilot-event.patch"
 TARGET="app"

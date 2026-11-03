@@ -10,8 +10,18 @@ only work done during the event. The pre-event code is **not** copied here.
 | Piece | Where it lives |
 |---|---|
 | Pre-event engine (baseline) | Public repo: https://github.com/prasannaba/reliability-ai-agent |
-| Pinned baseline commit | `02f2b6b93284cf1478abc79cdd3145b24576b5b8` — "Slim Docker image with CPU torch default plus CUDA overlay, fix Settings model refresh (v3.9.0)", 2026-09-28, on branch `main` |
-| Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (245 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
+| Pinned baseline commit | `688b1c7e1c04d1cd50886a81278a5a5d174e3203` — "Slim Docker image with CPU torch default plus CUDA overlay, fix Settings model refresh (v3.9.0)", 2026-09-28, on branch `main` |
+| Event work (Oct 28 – Nov 2, 2026) | `patches/reliability-copilot-event.patch` in this repo (244 files changed vs. the pinned baseline, including removal of a personal bio note from the knowledge base) |
+`reliability-ai-agent` was the author's private research & development (R&D)
+repository before the event; it was made public solely so this submission can
+pin and clone its v3.9.0 baseline. On 2026-11-03 its history was
+secret-scrubbed: two long-revoked Google API keys that had been hardcoded in
+July v3.0-era commits (`backend/main.py`, removed from the code long before
+the baseline) were redacted from all commits, and a redundant backup bundle
+file was dropped from history. Commit dates, messages, and the pinned tree
+are otherwise unchanged; the keys had already been revoked, so nothing in
+the current code or this submission was ever affected.
+
 | Assembly | `setup.ps1` (Windows) / `setup.sh` (Linux/macOS) clone the pinned baseline and apply the patch, producing the runnable app in `app/` |
 
 The full commit-by-commit development narrative (51 commits, Oct 28 – Nov 2,
@@ -21,7 +31,7 @@ dev-repo commit maps into this submission.
 The patch was generated from the development repo with:
 
 ```bash
-git diff --binary --full-index 02f2b6b93284cf1478abc79cdd3145b24576b5b8 <event-final-commit>
+git diff --binary --full-index 688b1c7e1c04d1cd50886a81278a5a5d174e3203 <event-final-commit>
 # event-final-commit = ba9a67f0197a6a56982fb5c44042fdfe15e225ed (private dev repo reliability-copilot, 2026-11-03, v5.1.1 + knowledge-base cleanup + Docker fixes + warranty/demo planning tools + home-screen chips for them)
 ```
 
@@ -105,7 +115,7 @@ for i in $(seq 1 30); do curl -s http://localhost:8000/health && break || sleep 
 
 ```bash
 git -C app rev-parse HEAD
-# -> 02f2b6b93284cf1478abc79cdd3145b24576b5b8 (baseline checked out; event work is the applied working-tree patch)
+# -> 688b1c7e1c04d1cd50886a81278a5a5d174e3203 (baseline checked out; event work is the applied working-tree patch)
 git -C app status --short   # shows exactly the files the event patch touches
 ```
 

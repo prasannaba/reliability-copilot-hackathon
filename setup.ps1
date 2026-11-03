@@ -10,7 +10,16 @@ $Upstream = "https://github.com/prasannaba/reliability-ai-agent.git"
 $Pin = "688b1c7e1c04d1cd50886a81278a5a5d174e3203"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Patch = Join-Path $Root "patches\reliability-copilot-event.patch"
-$TargetPath = Join-Path $Root $Target
+# Resolve the target without ever double-nesting it under the repo root:
+# simple names go inside this repo; path-style targets are relative to the
+# caller's working directory; absolute paths are used as-is.
+if ([System.IO.Path]::IsPathRooted($Target)) {
+    $TargetPath = $Target
+} elseif ($Target -match '[/\\]') {
+    $TargetPath = Join-Path (Get-Location) $Target
+} else {
+    $TargetPath = Join-Path $Root $Target
+}
 
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "git not found. Install Git first." }
 if (-not (Test-Path $Patch)) { throw "Patch not found at $Patch" }

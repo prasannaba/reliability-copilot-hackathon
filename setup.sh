@@ -9,14 +9,25 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH="$ROOT/patches/reliability-copilot-event.patch"
 TARGET="app"
 FORCE=0
+TARGET_SET=0
 
 for arg in "$@"; do
   case "$arg" in
     --force) FORCE=1 ;;
-    *) TARGET="$arg" ;;
+    *) TARGET="$arg"; TARGET_SET=1 ;;
   esac
 done
-TARGET_PATH="$ROOT/$TARGET"
+# Resolve the target without ever double-nesting it under the repo root:
+# - default / simple name -> inside this repo (e.g. ./setup.sh -> <repo>/app)
+# - path-style argument   -> relative to the caller's working directory
+# - absolute path         -> used as-is
+case "$TARGET" in
+  /*|[A-Za-z]:[/\\]*) TARGET_PATH="$TARGET" ;;
+  */*|*\\*)
+    if [ "$TARGET_SET" -eq 1 ]; then TARGET_PATH="$PWD/$TARGET"; else TARGET_PATH="$ROOT/$TARGET"; fi
+    ;;
+  *) TARGET_PATH="$ROOT/$TARGET" ;;
+esac
 
 command -v git >/dev/null 2>&1 || { echo "git not found. Install Git first." >&2; exit 1; }
 [ -f "$PATCH" ] || { echo "Patch not found at $PATCH" >&2; exit 1; }
